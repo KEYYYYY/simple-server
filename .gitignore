@@ -1,0 +1,4 @@
+.vscode/
+env/
+request_log.txt
+response_log.txt
