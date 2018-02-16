@@ -4,3 +4,4 @@ request_log.txt
 response_log.txt
 *.pyc
 __pycache__/
+db/

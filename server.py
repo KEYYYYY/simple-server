@@ -1,6 +1,5 @@
 import socket
 import routes
-import urllib.parse
 
 
 class Request:
