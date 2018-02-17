@@ -10,6 +10,11 @@
 
 <body>
     <h1>欢迎{{ username }}</h1>
+    <form method="POST">
+        <input type="text" placeholder="输入你需要做的事情" name="title">
+        <button type="submit">提交</button>
+    </form>
+    {{ todos }}
 </body>
 
 </html>
