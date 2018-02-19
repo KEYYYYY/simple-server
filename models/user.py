@@ -15,3 +15,6 @@ class User(Model):
             return user
         else:
             return None
+
+    def is_admin(self):
+        return self.id == 1

@@ -14,7 +14,13 @@
         <input type="text" placeholder="输入你需要做的事情" name="title">
         <button type="submit">提交</button>
     </form>
-    {{ todos }}
+    {% for todo in todos %}
+        <div>
+            {{ todo.title }}
+            <a href="/update?id={{ todo.id }}">修改</a>
+            <a href="/delete?id={{ todo.id }}">删除</a>
+        </div>
+    {% endfor %}
 </body>
 
 </html>

@@ -1,5 +1,7 @@
 import json
 
+next_id = 1
+
 
 class Model:
     @classmethod
@@ -17,11 +19,36 @@ class Model:
 
     def save(self):
         """
-        TODO:当用户信息修改了之后需要回写数据
+        新建数据或修改数据
         """
-        with open(self.get_db_path(), 'a') as f:
-            data_str = json.dumps(self.__dict__)
-            f.write(data_str + '\n')
+        if self.id == -1:
+            # 数据是新数据
+            global next_id
+            self.id = next_id
+            next_id += 1
+            with open(self.get_db_path(), 'a') as f:
+                data_str = json.dumps(self.__dict__)
+                f.write(data_str + '\n')
+        else:
+            obj_list = self.all()
+            with open(self.get_db_path(), 'w') as f:
+                for obj in obj_list:
+                    if obj.id == self.id:
+                        data_str = json.dumps(self.__dict__)
+                    else:
+                        data_str = json.dumps(obj.__dict__)
+                    f.write(data_str + '\n')
+
+    @classmethod
+    def delete(cls, id):
+        obj_list = cls.all()
+        with open(cls.get_db_path(), 'w') as f:
+            for obj in obj_list:
+                if obj.id == id:
+                    continue
+                else:
+                    data_str = json.dumps(obj.__dict__)
+                f.write(data_str + '\n')
 
     @classmethod
     def all(cls):

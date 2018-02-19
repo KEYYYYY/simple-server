@@ -1,4 +1,17 @@
+import os
+
+from jinja2 import Environment, FileSystemLoader
+
 from models.user import User
+from models.todo import Todo
+
+# __file__ 就是本文件的名字
+# 得到用于加载模板的目录
+path = '{}/templates/'.format(os.path.dirname(__file__))
+# 创建一个加载器, jinja2 会从这个目录中加载模板
+loader = FileSystemLoader(path)
+# 用加载器创建一个环境, 有了它才能读取模板文件
+env = Environment(loader=loader)
 
 
 def current_user(request):
@@ -14,21 +27,13 @@ def current_user(request):
         return None
 
 
-def template(file_name):
+def template(path, **kwargs):
     """
-    模版函数，返回HTML字符串
+    本函数接受一个路径和一系列参数
+    读取模板并渲染返回
     """
-    with open('templates/' + file_name, encoding='utf-8') as f:
-        content = f.read()
-    return content
-
-
-def redirect(new_route):
-    """
-    重定向函数
-    """
-    header = get_headers(code=302, Location=new_route)
-    return header + '\r\n\r\n'
+    t = env.get_template(path)
+    return t.render(**kwargs)
 
 
 def get_headers(code=200, **extra_headers):
@@ -47,6 +52,18 @@ def login_required(f):
     def decorator(request):
         user = current_user(request)
         if user:
+            return f(request)
+        else:
+            return get_headers(code=302, Location='/login') + '\r\n'
+    return decorator
+
+
+def owner_required(f):
+    def decorator(request):
+        user = current_user(request)
+        id = request.form().get('id', -1)
+        obj = Todo.get_by(id=int(id))
+        if obj.user_id == user.id:
             return f(request)
         else:
             return get_headers(code=302, Location='/login') + '\r\n'

@@ -2,26 +2,52 @@ from random import randint
 
 from models.todo import Todo
 from models.user import User
-from utils import current_user, get_headers, login_required, template
+from utils import (current_user, get_headers, login_required, owner_required,
+                   template)
 
 sessions = {}
-next_id = 1
 
 
 @login_required
 def index(request):
     if request.method == 'GET':
         user = current_user(request)
-        username = user.username
-        body = template('index.html')
-        body = body.replace('{{ username }}', username)
-        todos = [str(todo.title) for todo in Todo.filter_by(user_id=user.id)]
-        body = body.replace('{{ todos }}', '<br>'.join(todos))
+        todos = Todo.filter_by(user_id=user.id)
+        body = template('index.html', username=user.username, todos=todos)
         return get_headers() + '\r\n' + body
     if request.method == 'POST':
         data = request.form()
         Todo.create_obj(user_id=current_user(request).id, **data)
         return get_headers(code=302, Location='/') + '\r\n'
+
+
+@owner_required
+@login_required
+def delete(request):
+    data = request.form()
+    obj_id = data.get('id', -1)
+    Todo.delete(int(obj_id))
+    return get_headers(code=302, location='/') + '\r\n'
+
+
+@owner_required
+@login_required
+def update(request):
+    if request.method == 'GET':
+        id = request.form().get('id', -1)
+        todo = Todo.get_by(id=int(id))
+        body = template('update.html', id=id, title=todo.title)
+        return get_headers() + body + '\r\n'
+    elif request.method == 'POST':
+        data = request.form()
+        obj_id = data.get('id', -1)
+        # 这里id是整型
+        todo = Todo.get_by(id=int(obj_id))
+        todo.title = data['title']
+        todo.save()
+        return get_headers(code=302, Location='/') + '\r\n'
+    else:
+        return error(request)
 
 
 def error(request):
@@ -52,8 +78,7 @@ def login(request):
             return header + '\r\n'
         else:
             header = get_headers()
-            body = template('login.html')
-            body = body.replace('{{ message }}', '登录失败')
+            body = template('login.html', message='登录失败')
             return header + '\r\n' + body
     else:
         return error(request)
@@ -63,16 +88,12 @@ def register(request):
     if request.method == 'GET':
         header = get_headers()
         body = template('register.html')
-        user_data = [user.username for user in User.filter_by(password='123')]
-        body = body.replace('{{ message }}', '<br>'.join(user_data))
         return header + '\r\n' + body
     elif request.method == 'POST':
         data = request.form()
         global next_id
-        User.create_obj(id=next_id, **data)
-        next_id += 1
-        body = template('register.html')
-        body = body.replace('{{ message }}', '注册成功')
+        User.create_obj(**data)
+        body = template('register.html', messgae='注册成功')
         header = get_headers()
         return header + '\r\n' + body
     else:
@@ -83,4 +104,6 @@ router_dict = {
     '/': index,
     '/login': login,
     '/register': register,
+    '/delete': delete,
+    '/update': update,
 }
